@@ -4,12 +4,32 @@
 import os, re, PyPDF2
 
 
-def pdfcheck(filename):
+def pdfcheck(filename,filepass):
     print(filename)
+    pdffile = open(filename,'rb')
+    pdfReader = PyPDF2.PdfFileReader(pdffile)
+    if pdfReader.isEncrypted:
+        pdffile.close()
+        
+    else:
+        pdfWriter = PyPDF2.PdfFileWriter()
+        for pageNum in range(pdfReader.numPages):
+            pageObj = pdfReader.getPage(pageNum)
+            pdfWriter.addPage(pageObj)
+        pdfWriter.encrypt(filepass)
+        pathfile = os.path.split(filename)
+        #os.chdir(pathfile[0])
+        #正規表現でファイル名加工
+        newpdffile = open(os.path.join(pathfile[0],'encrypted_' + pathfile[1]),'wb')
+        pdfWriter.write(newpdffile)
+        pdffile.close()
+        newpdffile.close()
     return
 
 path = '.'
 Pdfext = '.pdf'
+
+pdfpassword = input('pdfpassword to set:')
 
 # os.walk() to get pdf file in folders under path
 pdffiles = []
@@ -19,14 +39,9 @@ for currrentDir, dirs, files in os.walk(path):
     #    print('ディレクトリ' + dir)
     for file in files:
         if file.endswith('.pdf'):
-            #print('ファイル ' + file)
-            pdffiles.append(os.path.abspath(file))
-            
-for pdf in pdffiles:
-    pdfcheck(pdf)
+            fullpathfilename = os.path.join(currrentDir,file)
+            pdffiles.append(fullpathfilename)
 
+for targetfile in pdffiles:
+    pdfcheck(targetfile,pdfpassword)
 
-# isencrypt = false then ...
-# password = input(), then decript w password
-
-# write with new name original filename and "decrypt".pdf
